@@ -1,0 +1,66 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.python-version
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# FastAPI / backend
+backend/.venv/
+backend/__pycache__/
+backend/hfsa_ckd.db
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+
+# ML / model artifacts
+*.pkl
+*.joblib
+*.h5
+*.onnx
+
+# Node / Vite / frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Env files / secrets
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+build/
+dist/
+coverage/
+*.tsbuildinfo
+
