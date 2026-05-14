@@ -20,6 +20,12 @@ def list_notifications(current_user: User = Depends(get_current_user), db: Sessi
     return rows
 
 
+@router.get("/unread-count")
+def unread_count(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    count = db.query(Notification).filter(Notification.user_id == current_user.id, Notification.is_read == 0).count()
+    return {"unread_count": count}
+
+
 @router.post("/high-risk-alert")
 def create_high_risk_alert(message: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     row = Notification(

@@ -35,6 +35,7 @@ export default function PatientPage() {
   const [loading, setLoading] = useState(false);
   const [chatQ, setChatQ] = useState("");
   const [chatA, setChatA] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
   const [appointmentForm, setAppointmentForm] = useState({ doctor_id: "", appointment_date: "", reason: "" });
 
   const stepFields = { 1: ["age", "bp", "sg", "htn", "dm", "cad"], 2: ["bgr", "bu", "sc", "sod", "pot", "hemo", "pcv", "wbcc", "rbcc"], 3: ["al", "su", "rbc", "pc", "pcc", "ba", "appet", "pe", "ane"] };
@@ -119,7 +120,7 @@ export default function PatientPage() {
 
           <div className="mt-4 rounded-2xl bg-slate-900/40 p-3">
             <p className="text-sm font-semibold text-slate-100">AI Prediction Studio</p>
-            <p className="text-xs text-slate-400">Step {step} of 3 • Guided CKD assessment flow</p>
+            <p className="text-xs text-slate-400">Step {step} of 3 - Guided CKD assessment flow</p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {visibleNumeric.map((f) => (
                 <label key={f.key}>
@@ -213,7 +214,23 @@ export default function PatientPage() {
         <h3 className="text-sm font-semibold text-slate-100">AI Assistant</h3>
         <div className="mt-2 flex gap-2">
           <input className="premium-input text-sm" value={chatQ} onChange={(e) => setChatQ(e.target.value)} placeholder="Ask CKD symptoms, prevention, diet..." />
-          <button className="btn-primary inline-flex items-center gap-1 text-sm" onClick={async () => { const { data } = await api.chatbot(chatQ); setChatA(data.answer); }}><MessageCircleMore size={14} /> Ask</button>
+          <button
+            className="btn-primary inline-flex items-center gap-1 text-sm"
+            disabled={chatLoading || !chatQ.trim()}
+            onClick={async () => {
+              setChatLoading(true);
+              try {
+                const { data } = await api.chatbot(chatQ);
+                setChatA(data.answer || "No response.");
+              } catch {
+                setChatA("Assistant is temporarily unavailable. Please try again.");
+              } finally {
+                setChatLoading(false);
+              }
+            }}
+          >
+            <MessageCircleMore size={14} /> {chatLoading ? "Thinking..." : "Ask"}
+          </button>
         </div>
         {chatA && <p className="mt-2 rounded-xl bg-slate-900/40 p-3 text-sm text-slate-200">{chatA}</p>}
       </section>

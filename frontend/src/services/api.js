@@ -30,6 +30,8 @@ export const api = {
   predict: (payload) => http.post("/predict", payload),
   predictAndSave: (payload) => http.post("/api/records/predict-and-save", payload),
   listRecords: () => http.get("/api/records/"),
+  getRecord: (id) => http.get(`/api/records/${id}`),
+  getPatientRecordsForDoctor: (patientId) => http.get(`/api/records/patient/${patientId}`),
   uploadAndPredict: (formData) => http.post("/api/records/upload-and-predict", formData),
 
   patientDashboard: () => http.get("/api/dashboards/patient"),
@@ -41,6 +43,7 @@ export const api = {
     http.get("/api/recommendations/latest", { params: { risk_level: riskLevel } }),
 
   notifications: () => http.get("/api/notifications/"),
+  notificationsUnreadCount: () => http.get("/api/notifications/unread-count"),
   createRiskAlert: (message) => http.post("/api/notifications/high-risk-alert", null, { params: { message } }),
   markNotificationRead: (id) => http.patch(`/api/notifications/read/${id}`),
   markAllNotificationsRead: () => http.patch("/api/notifications/read-all"),
@@ -50,6 +53,7 @@ export const api = {
     http.post("/api/reports/medical-pdf", payload, { responseType: "blob" }),
   explain: (prediction) => http.post("/api/ai/explain", { prediction }),
   chatbot: (query) => http.post("/api/ai/chatbot", { query }),
+  shareResult: (payload) => http.post("/api/ai/share", payload),
   listDoctors: () => http.get("/api/appointments/doctors"),
   bookAppointment: (payload) => http.post("/api/appointments/", payload),
   myAppointments: () => http.get("/api/appointments/mine"),

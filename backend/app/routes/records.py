@@ -7,6 +7,7 @@ from app.core.config import get_db, create_tables
 from app.core.file_extractor import extract_medical_features
 from app.models.database import PatientRecord
 from app.models.auth import get_current_user
+from app.models.auth import require_roles
 from app.models.database import User
 from app.models.ckd_model import CKDModel
 from app.schemas.auth import RecordCreate, RecordResponse, RecordBase
@@ -75,6 +76,32 @@ def get_record(
         raise HTTPException(status_code=404, detail="Record not found")
     
     return record
+
+
+@router.get("/patient/{patient_id}", response_model=List[RecordResponse])
+def get_patient_records_for_doctor(
+    patient_id: int,
+    current_user: User = Depends(require_roles("doctor", "admin")),
+    db: Session = Depends(get_db),
+):
+    # Doctor visibility is constrained to patients with whom they share appointments.
+    if current_user.role == "doctor":
+        from app.models.database import Appointment
+        has_access = (
+            db.query(Appointment)
+            .filter(Appointment.patient_id == patient_id, Appointment.doctor_id == current_user.id)
+            .first()
+            is not None
+        )
+        if not has_access:
+            raise HTTPException(status_code=403, detail="No access to this patient records")
+
+    return (
+        db.query(PatientRecord)
+        .filter(PatientRecord.user_id == patient_id)
+        .order_by(PatientRecord.created_at.desc())
+        .all()
+    )
 
 @router.delete("/{record_id}")
 def delete_record(

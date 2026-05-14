@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.config import get_db
 from app.models.auth import get_current_user, require_roles
-from app.models.database import Appointment, ConsultationNote, DoctorProfile, PatientRecord, User
+from app.models.database import Appointment, ConsultationNote, DoctorProfile, Notification, PatientRecord, User
 from app.schemas.appointments import (
     AppointmentCreate,
     AppointmentResponse,
@@ -52,6 +52,15 @@ def book_appointment(payload: AppointmentCreate, current_user: User = Depends(re
     db.add(row)
     db.commit()
     db.refresh(row)
+    db.add(
+        Notification(
+            user_id=doctor.id,
+            title="New Appointment Request",
+            message=f"Appointment #{row.id}: {current_user.full_name or current_user.username} requested {row.appointment_date.strftime('%d %b %Y %I:%M %p')}",
+            type="appointment",
+        )
+    )
+    db.commit()
     return row
 
 
@@ -95,10 +104,27 @@ def update_status(
         raise HTTPException(status_code=403, detail="You can update only your appointments")
     if payload.status not in ("pending", "accepted", "rejected", "completed"):
         raise HTTPException(status_code=400, detail="Invalid status")
+    current = (row.status or "").lower()
+    target = (payload.status or "").lower()
+    if current in ("rejected", "cancelled", "completed"):
+        raise HTTPException(status_code=400, detail="Finalized appointment cannot be changed")
+    if current == "accepted" and target in ("accepted", "rejected"):
+        raise HTTPException(status_code=400, detail="Accepted appointment cannot be accepted/rejected again")
+    if current == "pending" and target == "completed":
+        raise HTTPException(status_code=400, detail="Pending appointment must be accepted before completion")
     row.status = payload.status
     row.doctor_notes = payload.doctor_notes
     db.commit()
     db.refresh(row)
+    db.add(
+        Notification(
+            user_id=row.patient_id,
+            title="Appointment Updated",
+            message=f"Your appointment on {row.appointment_date.strftime('%d %b %Y %I:%M %p')} is now {row.status}.",
+            type="appointment",
+        )
+    )
+    db.commit()
     return row
 
 
@@ -126,6 +152,15 @@ def cancel_appointment(
     row.status = "cancelled"
     db.commit()
     db.refresh(row)
+    db.add(
+        Notification(
+            user_id=row.doctor_id,
+            title="Appointment Cancelled",
+            message=f"Patient cancelled appointment on {row.appointment_date.strftime('%d %b %Y %I:%M %p')}.",
+            type="appointment",
+        )
+    )
+    db.commit()
     return row
 
 

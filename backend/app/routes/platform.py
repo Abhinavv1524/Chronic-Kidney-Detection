@@ -103,6 +103,12 @@ def doctor_patients(current_user: User = Depends(require_roles("doctor", "admin"
     else:
         assignments = db.query(PatientDoctorAssignment).filter(PatientDoctorAssignment.doctor_id == current_user.id).all()
     patient_ids = [a.patient_id for a in assignments]
+    # Fallback mapping: if no explicit assignment exists, infer from appointment history.
+    if current_user.role == "doctor" and not patient_ids:
+        rows = db.query(Appointment.patient_id).filter(Appointment.doctor_id == current_user.id).distinct().all()
+        patient_ids = [r[0] for r in rows]
+    if current_user.role == "doctor" and not patient_ids:
+        return db.query(User).filter(User.role == "patient").order_by(User.created_at.desc()).all()
     if not patient_ids:
         return []
     return db.query(User).filter(User.id.in_(patient_ids)).all()
